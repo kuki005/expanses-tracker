@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Expense Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .custom-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #e2e8f0;
+            border-radius: 10px;
+        }
+
+        .shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        #app {
+            /* border: 2px solid black; */
+            border-radius: 30px;
+            overflow: hidden;
+            padding: 10px;
+
+        }
+
+        #amount_card {
+            border: 2px solid black;
+            border-radius: 50px;
+            margin: 15px;
+            background: #fa7b5f;
+            background: linear-gradient(40deg, rgba(250, 123, 95, 1) 31%, rgba(87, 199, 133, 1) 69%);
+        }
+
+        #floating_btn {
+            opacity: 80%;
+            border: 2px solid black;
+            background-color: tomato;
+        }
+
+        #submit-btn {
+            background-color: tomato;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+    </style>
+</head>
+
+<body class="pb-4" style="width: 100vw; height: 100vh; overflow-x: hidden;">
+    <!-- display: none; -->
+    <div id="startup_page" style="display: none; position: absolute; top: 0; left: 0; width: 100vw; z-index: 100;"
+        class="startup bg-purple-100 min-h-screen flex items-center justify-center p-4">
+        <!-- Login in card -->
+        <div
+            class="bg-white w-full max-w-[375px] h-[750px] rounded-[3rem] shadow-2xl p-8 flex flex-col items-center justify-between transition-all hover:shadow-purple-200">
+
+            <div class="mt-10 bg-slate-50 w-72 h-72 rounded-full flex items-center justify-center relative">
+                <img src="https://cdn-icons-png.flaticon.com/512/9402/9402431.png" alt="Wallet Illustration"
+                    class="w-48 h-48 object-contain drop-shadow-xl" />
+
+                <div
+                    class="absolute top-12 right-6 bg-green-100 text-green-500 rounded-full w-8 h-8 flex items-center justify-center shadow-sm">
+                    ↑</div>
+                <div
+                    class="absolute bottom-16 left-6 bg-pink-100 text-pink-500 rounded-full w-8 h-8 flex items-center justify-center shadow-sm">
+                    ↓</div>
+            </div>
+
+            <div class="text-center px-4">
+                <h1 class="text-[#1e1b4b] text-3xl font-bold leading-tight mb-4">
+                    Save your money with Expense Tracker
+                </h1>
+                <p class="text-gray-400 text-base leading-relaxed">
+                    Save money! The more your money works for you, the less you have to work for money.
+                </p>
+            </div>
+
+            <div class="w-full pb-6">
+                <button id="startBtn"
+                    class="w-full bg-[#7c3aed] hover:bg-[#6d28d9] active:scale-95 transition-all text-white py-5 rounded-2xl text-xl font-semibold shadow-lg shadow-purple-200">
+                    Let's Start
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Login / Sign Up Modal -->
+    <div id="auth-modal" style="z-index: 150;"
+        class="modal-overlay fixed inset-0 z-[60] items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl border border-gray-100">
+            <div class="p-8">
+                <div class="text-center mb-8">
+                    <div
+                        class="bg-indigo-600 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-200">
+                        <i data-lucide="wallet" class="text-white w-8 h-8"></i>
+                    </div>
+                    <h3 id="auth-title" class="text-2xl font-bold text-gray-800">Welcome Back</h3>
+                    <p id="auth-subtitle" class="text-sm text-gray-500 mt-1">Please sign in to your account</p>
+                </div>
+
+                <form id="auth-form" class="space-y-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Email
+                            Address</label>
+                        <input type="email" id="auth-email" required placeholder="name@email.com"
+                            class="w-full border border-gray-100 bg-gray-50 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Password</label>
+                        <input type="password" id="auth-password" required placeholder="••••••••"
+                            class="w-full border border-gray-100 bg-gray-50 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                    </div>
+                    <button type="submit" id="auth-submit-btn"
+                        class="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 active:scale-[0.98] transition-all mt-2">
+                        Sign In
+                    </button>
+                </form>
+
+                <div class="mt-6 text-center">
+                    <button onclick="window.toggleAuthMode()" id="auth-toggle-text"
+                        class="text-sm text-indigo-600 font-semibold hover:underline">
+                        New here? Create an account
+                    </button>
+                </div>
+            </div>
+            <div class="bg-gray-50 p-4 text-center border-t border-gray-100">
+                <button onclick="window.closeAuthModal()"
+                    class="text-xs text-gray-400 font-medium uppercase tracking-wider">Maybe Later</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="app" class="max-w-md mx-auto min-h-screen relative">
+        <!-- Header / Dashboard -->
+        <header id="amount_card" class="bg-indigo-600 p-6 text-white rounded-b-3xl shadow-lg mb-4">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center gap-2">
+                    <div class="bg-white/20 p-2 rounded-lg">
+                        <i data-lucide="wallet" class="w-5 h-5"></i>
+                    </div>
+                    <h1 class="text-xl font-bold tracking-tight">Kuki's Expenses</h1>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div id="user-display"
+                        class="text-[10px] bg-white/20 px-2 py-1 rounded-full border border-white/10">Guest</div>
+                    <button id="auth-action-btn" onclick="window.handleAuthAction()"
+                        class="bg-white/20 p-1.5 rounded-full hover:bg-white/30 transition-colors">
+                        <i data-lucide="log-in" id="auth-icon" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white/10 p-5 rounded-2xl mb-4 border border-white/20">
+                <p class="text-sm opacity-80 mb-1">Current Balance</p>
+                <h2 id="net-balance" class="text-3xl font-bold">₹0.00</h2>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-white/10 p-3 rounded-xl border border-white/10">
+                    <p class="text-[10px] uppercase tracking-wider opacity-70 mb-1">Pending In</p>
+                    <p id="pending-in" class="text-lg font-semibold text-green-300">+₹0.00</p>
+                </div>
+                <div class="bg-white/10 p-3 rounded-xl border border-white/10">
+                    <p class="text-[10px] uppercase tracking-wider opacity-70 mb-1">Pending Out</p>
+                    <p id="pending-out" class="text-lg font-semibold text-red-300">-₹0.00</p>
+                </div>
+            </div>
+        </header>
+
+
+
+        <!-- Gemini Insight Card -->
+        <!-- <div class="px-4 mb-6">
+            <div id="ai-insight-card" class="bg-white p-4 rounded-2xl shadow-sm border border-indigo-100">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                        <div class="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg">
+                            <i data-lucide="sparkles" class="w-4 h-4"></i>
+                        </div>
+                        <h3 class="font-bold text-sm text-gray-800">Smart Insights</h3>
+                    </div>
+                    <button id="refresh-insight-btn" onclick="window.generateFinancialInsight()"
+                        class="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+                        <i data-lucide="refresh-cw" class="w-3 h-3"></i> ANALYZE
+                    </button>
+                </div>
+                <p id="insight-text" class="text-xs text-gray-600 leading-relaxed italic">
+                    Add some transactions and click analyze to get ✨ AI-powered financial advice.
+                </p>
+                <div id="insight-actions" class="hidden mt-3 pt-3 border-t border-gray-50 flex gap-2">
+                    <button onclick="window.speakInsight()"
+                        class="text-[10px] bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-full flex items-center gap-1 font-bold">
+                        <i data-lucide="volume-2" class="w-3 h-3"></i> LISTEN
+                    </button>
+                </div>
+            </div>
+        </div> -->
+
+        <!-- Main Content -->
+        <main class="px-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-gray-800">Recent Activity</h3>
+                <div class="flex gap-3">
+                    <button onclick="window.openHistoryModal()"
+                        class="text-indigo-600 text-xs font-semibold flex items-center gap-1 bg-indigo-50 px-2 py-1 rounded-md">
+                        <i data-lucide="list" class="w-3 h-3"></i> See All
+                    </button>
+                    <button onclick="window.openTransferModal()"
+                        class="text-indigo-600 text-xs font-semibold flex items-center gap-1 bg-indigo-50 px-2 py-1 rounded-md">
+                        <i data-lucide="repeat" class="w-3 h-3"></i> Transfer
+                    </button>
+                </div>
+            </div>
+
+            <div id="transaction-list" class="space-y-3">
+                <div class="text-center py-10 text-gray-400">
+                    <p>No transactions yet.</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Floating Add Button -->
+        <button id="floating_btn" onclick="window.openModal('expense')"
+            class="fixed bottom-6 right-6 w-14 h-14 bg-indigo-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-indigo-700 transition-transform active:scale-90 z-40">
+            <i data-lucide="plus" class="w-8 h-8"></i>
+        </button>
+
+
+        <!-- Transaction Modal -->
+        <div id="transaction-modal" class="modal-overlay fixed inset-0 z-50 items-center justify-center p-4">
+            <div class="bg-white w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl">
+                <div class="p-5 border-b flex justify-between items-center">
+                    <h3 id="modal-title" class="text-lg font-bold text-gray-800">Add Transaction</h3>
+                    <button onclick="window.closeModal()" class="text-gray-400 hover:text-gray-600"><i
+                            data-lucide="x"></i></button>
+                </div>
+                <form id="transaction-form" class="p-6 space-y-4">
+                    <input type="hidden" id="edit-id" value="">
+                    <div class="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-lg mb-2">
+                        <button type="button" onclick="window.setMode('Income')" id="btn-income"
+                            class="py-2 text-sm font-medium rounded-md transition-all">Income</button>
+                        <button type="button" onclick="window.setMode('Expense')" id="btn-expense"
+                            class="py-2 text-sm font-medium rounded-md transition-all">Expense</button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Date</label>
+                            <input type="date" id="date" required
+                                class="w-full border border-gray-200 rounded-lg p-2 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Amount</label>
+                            <input type="number" step="0.01" id="amount" required placeholder="0.00"
+                                class="w-full border border-gray-200 rounded-lg p-2 text-sm">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Account</label>
+                            <select id="account-type" class="w-full border border-gray-200 rounded-lg p-2 text-sm">
+                                <option value="Cash">Cash</option>
+                                <option value="Bank">Bank</option>
+                            </select>
+                        </div>
+                        <div id="category-container">
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Category</label>
+                            <select id="category" class="w-full border border-gray-200 rounded-lg p-2 text-sm">
+                                <option value="Food">Food</option>
+                                <option value="Entertainment">Entertainment</option>
+                                <option value="Travel">Travel</option>
+                                <option value="Cloth">Cloth</option>
+                                <option value="House">House</option>
+                                <option value="Phone">Phone</option>
+                                <option value="Education">Education</option>
+                                <option value="Others">Others</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase">Details</label>
+                            <!-- <button type="button" onclick="window.aiSuggestDetails()"
+                                class="text-[9px] font-bold text-indigo-600 flex items-center gap-0.5">
+                                <i data-lucide="sparkles" class="w-3 h-3"></i> AI SUGGEST ✨
+                            </button> -->
+                        </div>
+                        <input type="text" id="details" placeholder="Note..."
+                            class="w-full border border-gray-200 rounded-lg p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Status</label>
+                        <select id="status" class="w-full border border-gray-200 rounded-lg p-2 text-sm">
+                            <option value="Done">Done</option>
+                            <option value="Pending">Pending</option>
+                        </select>
+                    </div>
+                    <button type="submit" id="submit-btn"
+                        class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg">Save
+                        Transaction</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Transfer Modal -->
+        <div id="transfer-modal" class="modal-overlay fixed inset-0 z-50 items-center justify-center p-4">
+            <div class="bg-white w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl">
+                <div class="p-5 border-b flex justify-between items-center">
+                    <h3 class="text-lg font-bold">Transfer</h3>
+                    <button onclick="window.closeTransferModal()" class="text-gray-400"><i data-lucide="x"></i></button>
+                </div>
+                <form id="transfer-form" class="p-6 space-y-4">
+                    <div class="flex items-center justify-center gap-4 bg-gray-50 p-4 rounded-xl">
+                        <span id="transfer-from-text" class="font-bold text-indigo-600">Cash</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4 text-gray-400"></i>
+                        <span id="transfer-to-text" class="font-bold text-green-600">Bank</span>
+                        <button type="button" onclick="window.toggleTransferDirection()"
+                            class="ml-auto p-2 bg-white rounded-full shadow-sm">
+                            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <input type="hidden" id="transfer-direction" value="CashToBank">
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Amount</label>
+                        <input type="number" step="0.01" id="transfer-amount" required placeholder="0.00"
+                            class="w-full border border-gray-200 rounded-lg p-2 text-sm">
+                    </div>
+                    <button type="submit" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">Confirm
+                        Transfer</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- History Modal -->
+        <div id="history-modal"
+            class="modal-overlay fixed inset-0 z-50 items-end sm:items-center justify-center p-0 sm:p-4">
+            <div
+                class="bg-white w-full max-w-md h-[90vh] sm:h-[80vh] rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl flex flex-col">
+                <div class="p-5 border-b flex justify-between items-center bg-gray-50">
+                    <h3 class="text-lg font-bold text-gray-800">History</h3>
+                    <button onclick="window.closeHistoryModal()" class="p-2 text-gray-400"><i
+                            data-lucide="x"></i></button>
+                </div>
+                <div id="history-list" class="flex-1 overflow-y-auto p-4 space-y-3 custom-scroll"></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, onSnapshot, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase Configuration
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyBxbwjtY0Jp6QfCxDeZW_NqWHcH9b-GD-A",
+            authDomain: "som-s-lms.firebaseapp.com",
+            databaseURL: "https://som-s-lms-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "som-s-lms",
+            storageBucket: "som-s-lms.firebasestorage.app",
+            messagingSenderId: "1029610886954",
+            appId: "1:1029610886954:web:b650a600f84565a80df053",
+            measurementId: "G-4SHHXKY1Y2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'expense-tracker-v2';
+        const apiKey = "";
+
+        let currentUser = null;
+        let transactions = [];
+        let currentMode = 'Expense';
+        let currentInsight = "";
+        let isSignUpMode = false;
+        let unsubscribeTransactions = null;
+
+        const elements = {
+            mainApp: document.getElementById('app'),
+            startupPage: document.getElementById('startup_page'),
+            balance: document.getElementById('net-balance'),
+            pendingIn: document.getElementById('pending-in'),
+            pendingOut: document.getElementById('pending-out'),
+            list: document.getElementById('transaction-list'),
+            historyList: document.getElementById('history-list'),
+            modal: document.getElementById('transaction-modal'),
+            form: document.getElementById('transaction-form'),
+            historyModal: document.getElementById('history-modal'),
+            transferModal: document.getElementById('transfer-modal'),
+            userDisplay: document.getElementById('user-display'),
+            insightText: document.getElementById('insight-text'),
+            insightActions: document.getElementById('insight-actions'),
+            authModal: document.getElementById('auth-modal'),
+            authForm: document.getElementById('auth-form'),
+            authTitle: document.getElementById('auth-title'),
+            authSubtitle: document.getElementById('auth-subtitle'),
+            authSubmitBtn: document.getElementById('auth-submit-btn'),
+            authToggleText: document.getElementById('auth-toggle-text'),
+            authEmail: document.getElementById('auth-email'),
+            authPassword: document.getElementById('auth-password'),
+            authIcon: document.getElementById('auth-icon')
+        };
+
+        const initIcons = () => typeof lucide !== 'undefined' && lucide.createIcons();
+
+        // Gemini API Helpers
+        const callGemini = async (prompt, systemInstruction = "") => {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                systemInstruction: systemInstruction ? { parts: [{ text: systemInstruction }] } : undefined
+            };
+            for (let i = 0; i < 5; i++) {
+                try {
+                    const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    if (!response.ok) throw new Error('API Error');
+                    const data = await response.json();
+                    return data.candidates?.[0]?.content?.parts?.[0]?.text;
+                } catch (e) {
+                    if (i === 4) throw e;
+                    await new Promise(r => setTimeout(r, Math.pow(2, i) * 1000));
+                }
+            }
+        };
+
+        const speakGemini = async (text) => {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: `Say warmly and clearly: ${text}` }] }],
+                generationConfig: {
+                    responseModalities: ["AUDIO"],
+                    speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Kore" } } }
+                }
+            };
+            for (let i = 0; i < 5; i++) {
+                try {
+                    const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    const result = await response.json();
+                    const pcmData = result.candidates[0].content.parts[0].inlineData.data;
+                    const audioBlob = pcmToWav(pcmData, 24000);
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    const audio = new Audio(audioUrl);
+                    audio.play();
+                    return;
+                } catch (e) {
+                    if (i === 4) console.error("TTS Failed", e);
+                    await new Promise(r => setTimeout(r, Math.pow(2, i) * 1000));
+                }
+            }
+        };
+
+        function pcmToWav(base64Data, sampleRate) {
+            const binaryString = atob(base64Data);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) bytes[i] = binaryString.charCodeAt(i);
+            const buffer = bytes.buffer;
+            const wavHeader = new ArrayBuffer(44);
+            const view = new DataView(wavHeader);
+            view.setUint32(0, 0x46464952, true);
+            view.setUint32(4, 36 + buffer.byteLength, true);
+            view.setUint32(8, 0x45564157, true);
+            view.setUint32(12, 0x20746d66, true);
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, 1, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true);
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
+            view.setUint32(36, 0x61746164, true);
+            view.setUint32(40, buffer.byteLength, true);
+            return new Blob([wavHeader, buffer], { type: 'audio/wav' });
+        }
+
+        // AI Feature Functions
+        window.generateFinancialInsight = async () => {
+            if (transactions.length === 0) return;
+            elements.insightText.innerHTML = '<div class="h-3 w-full shimmer rounded mb-1"></div><div class="h-3 w-2/3 shimmer rounded"></div>';
+            elements.insightActions.classList.add('hidden');
+            const summary = transactions.map(t => `${t.date}: ${t.type} ${t.amount} (${t.category})`).join(', ');
+            const prompt = `Analyze these transactions and give one short (max 2 sentences) personal financial tip: ${summary}`;
+            const system = "You are a friendly, encouraging financial advisor. Be concise and actionable.";
+            try {
+                const insight = await callGemini(prompt, system);
+                currentInsight = insight;
+                elements.insightText.innerText = insight;
+                elements.insightActions.classList.remove('hidden');
+            } catch (err) {
+                elements.insightText.innerText = "Couldn't generate insight right now. Try again later.";
+            }
+        };
+
+        window.speakInsight = () => speakGemini(currentInsight);
+
+        window.aiSuggestDetails = async () => {
+            const amount = document.getElementById('amount').value;
+            const cat = document.getElementById('category').value;
+            if (!amount) return;
+            const inputField = document.getElementById('details');
+            const originalPlaceholder = inputField.placeholder;
+            inputField.placeholder = "Generating ✨...";
+            inputField.value = "";
+            const prompt = `Suggest a 3-5 word descriptive note for a ₹${amount} ${currentMode} in the category "${cat}". Only return the note text.`;
+            try {
+                const suggestion = await callGemini(prompt, "You suggest short, realistic transaction notes.");
+                inputField.value = suggestion.trim().replace(/^"|"₹/g, '');
+            } catch (e) {
+                inputField.placeholder = originalPlaceholder;
+            }
+        };
+
+        // Auth Logic
+        window.openAuthModal = () => elements.authModal.classList.add('active');
+        window.closeAuthModal = () => elements.authModal.classList.remove('active');
+
+        window.toggleAuthMode = () => {
+            isSignUpMode = !isSignUpMode;
+            elements.authTitle.innerText = isSignUpMode ? 'Create Account' : 'Welcome Back';
+            elements.authSubtitle.innerText = isSignUpMode ? 'Start tracking your wealth today' : 'Please sign in to your account';
+            elements.authSubmitBtn.innerText = isSignUpMode ? 'Sign Up' : 'Sign In';
+            elements.authToggleText.innerText = isSignUpMode ? 'Already have an account? Sign In' : 'New here? Create an account';
+        };
+
+        window.handleAuthAction = () => {
+            if (currentUser && !currentUser.isAnonymous) {
+                if (confirm("Are you sure you want to sign out?")) {
+                    signOut(auth);
+                }
+            } else {
+                window.openAuthModal();
+            }
+        };
+
+        // Startup Page Login
+        const btn = document.getElementById('startBtn');
+        btn.addEventListener('click', () => {
+            // Add a simple haptic-like feedback or redirect
+            btn.innerHTML = 'Loading...';
+            setTimeout(() => {
+                window.openAuthModal();
+                // alert('Account Setup Initialized!');
+                btn.innerHTML = "Let's Start";
+            }, 800);
+        });
+
+        elements.authForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const email = elements.authEmail.value;
+            const password = elements.authPassword.value;
+
+            try {
+                elements.authSubmitBtn.disabled = true;
+                elements.authSubmitBtn.innerText = isSignUpMode ? 'Creating Account...' : 'Signing In...';
+
+                if (isSignUpMode) {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                } else {
+                    await signInWithEmailAndPassword(auth, email, password);
+                }
+
+                elements.authForm.reset();
+                window.closeAuthModal();
+                // main App
+                // elements.app.style.display = "block";
+                // elements.startupPage.style.border = "2px solid black";
+                elements.startupPage.style.display = "none";
+
+                console.log(elements.mainApp);
+
+            } catch (error) {
+                console.error("Auth Error:", error);
+                alert(error.message);
+            } finally {
+                elements.authSubmitBtn.disabled = false;
+                elements.authSubmitBtn.innerText = isSignUpMode ? 'Sign Up' : 'Sign In';
+            }
+        };
+
+        const initAuth = async () => {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token).catch(() => signInAnonymously(auth));
+            } else {
+                // Initial check done by listener
+            }
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            if (unsubscribeTransactions) unsubscribeTransactions();
+
+            if (user) {
+                elements.startupPage.style.display = "none";
+                // FIX: Add null check for email before split to avoid TypeError
+                const displayName = (user.email && user.email.includes('@')) ? user.email.split('@')[0] : "Guest User";
+                elements.userDisplay.innerText = user.isAnonymous ? "Guest Mode" : displayName;
+                elements.authIcon.setAttribute('data-lucide', user.isAnonymous ? 'log-in' : 'log-out');
+                startListeners();
+            } else {
+                // elements.userDisplay.innerText = "Guest";
+                // elements.authIcon.setAttribute('data-lucide', 'log-in');
+                // transactions = [];
+                // renderUI();
+                // signInAnonymously(auth); // Ensure we always have an auth context for Firestore
+                elements.startupPage.style.display = "flex";
+
+                // window.openAuthModal();
+            }
+            initIcons();
+        });
+
+        function startListeners() {
+            if (!currentUser) return;
+            // RULE 1: Strict paths
+            const transRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'transactions');
+            unsubscribeTransactions = onSnapshot(transRef, (snapshot) => {
+                transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+                renderUI();
+            }, (err) => {
+                console.error("Firestore Error:", err);
+            });
+        }
+
+        // Transaction Logic
+        const generateItemHTML = (t) => {
+            const isExpense = t.type === 'Expense';
+            const isIncome = t.type === 'Income';
+            const isTransfer = t.type === 'Transfer';
+            const isPending = t.status === 'Pending';
+            let iconClass = isIncome ? 'bg-green-100 text-green-600' : (isExpense ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600');
+            let iconName = isIncome ? 'arrow-down-left' : (isExpense ? 'arrow-up-right' : 'repeat');
+
+            return `
+                <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center ${iconClass} shrink-0">
+                        <i data-lucide="${iconName}" class="w-5 h-5"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-start">
+                            <h4 class="font-bold text-gray-800 text-xs truncate">${isTransfer ? `Trf: ${t.fromAccount} → ${t.toAccount}` : (t.details || t.category)}</h4>
+                            <span class="font-bold text-sm ${isIncome ? 'text-green-600' : (isExpense ? 'text-red-600' : 'text-blue-600')}">
+                                ${isExpense ? '-' : (isIncome ? '+' : '')}₹${parseFloat(t.amount || 0).toFixed(2)}
+                            </span>
+                        </div>
+                        <div class="flex justify-between items-center mt-1">
+                            <span class="text-[9px] text-gray-400 uppercase font-bold">${t.date} • ${t.account || t.fromAccount}</span>
+                            <div class="flex items-center gap-2">
+                                <button onclick="window.toggleStatus('${t.id}', '${t.status}')" class="text-[9px] px-2 py-0.5 rounded-full font-bold transition-colors ${isPending ? 'bg-amber-100 text-amber-600' : 'bg-gray-100 text-gray-500'}">
+                                    ${t.status}
+                                </button>
+                                ${!isTransfer ? `<button onclick="window.editTransaction('${t.id}')" class="text-gray-400 hover:text-indigo-600"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>` : ''}
+                                <button onclick="window.deleteTransaction('${t.id}')" class="text-gray-300 hover:text-red-500"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        function renderUI() {
+            let total = 0, pIn = 0, pOut = 0;
+            elements.list.innerHTML = '';
+            elements.historyList.innerHTML = '';
+            transactions.forEach((t, index) => {
+                const amt = parseFloat(t.amount || 0);
+                if (t.type !== 'Transfer') {
+                    if (t.type === 'Income') { if (t.status === 'Done') total += amt; else pIn += amt; }
+                    else { if (t.status === 'Done') total -= amt; else pOut += amt; }
+                }
+                const html = generateItemHTML(t);
+                if (index < 5) elements.list.insertAdjacentHTML('beforeend', html);
+                elements.historyList.insertAdjacentHTML('beforeend', html);
+            });
+            if (transactions.length === 0) elements.list.innerHTML = '<div class="text-center py-10 text-gray-400 text-xs">No records.</div>';
+            elements.balance.innerText = `₹${total.toFixed(2)}`;
+            elements.pendingIn.innerText = `+₹${pIn.toFixed(2)}`;
+            elements.pendingOut.innerText = `-₹${pOut.toFixed(2)}`;
+            initIcons();
+        }
+
+        window.openModal = (mode, existingData = null) => {
+            elements.form.reset();
+            const editId = document.getElementById('edit-id');
+            editId.value = existingData ? existingData.id : '';
+            document.getElementById('modal-title').innerText = existingData ? 'Edit Record' : 'Add Record';
+            if (existingData) {
+                currentMode = existingData.type;
+                document.getElementById('date').value = existingData.date;
+                document.getElementById('amount').value = existingData.amount;
+                document.getElementById('account-type').value = existingData.account;
+                document.getElementById('category').value = existingData.category;
+                document.getElementById('details').value = existingData.details;
+                document.getElementById('status').value = existingData.status;
+            } else {
+                currentMode = mode === 'income' ? 'Income' : 'Expense';
+                document.getElementById('date').valueAsDate = new Date();
+            }
+            window.setMode(currentMode);
+            elements.modal.classList.add('active');
+        };
+
+        window.closeModal = () => elements.modal.classList.remove('active');
+        window.openHistoryModal = () => { elements.historyModal.classList.add('active'); renderUI(); };
+        window.closeHistoryModal = () => elements.historyModal.classList.remove('active');
+
+        window.setMode = (mode) => {
+            currentMode = mode;
+            const btnInc = document.getElementById('btn-income'), btnExp = document.getElementById('btn-expense');
+            const catContainer = document.getElementById('category-container');
+            if (mode === 'Income') {
+                btnInc.className = 'py-2 text-sm font-bold rounded-md bg-white shadow-sm text-green-600';
+                btnExp.className = 'py-2 text-sm font-medium text-gray-400';
+                catContainer.style.opacity = '0.3'; catContainer.style.pointerEvents = 'none';
+            } else {
+                btnExp.className = 'py-2 text-sm font-bold rounded-md bg-white shadow-sm text-red-600';
+                btnInc.className = 'py-2 text-sm font-medium text-gray-400';
+                catContainer.style.opacity = '1'; catContainer.style.pointerEvents = 'auto';
+            }
+        };
+
+        window.editTransaction = (id) => {
+            const t = transactions.find(x => x.id === id);
+            if (t) window.openModal(t.type.toLowerCase(), t);
+        };
+
+        window.deleteTransaction = async (id) => {
+            if (!currentUser) return;
+            if (confirm('Delete transaction?')) {
+                await deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'transactions', id));
+            }
+        };
+
+        window.toggleStatus = async (id, currentStatus) => {
+            if (!currentUser) return;
+            const newStatus = currentStatus === 'Done' ? 'Pending' : 'Done';
+            await updateDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'transactions', id), { status: newStatus });
+        };
+
+        window.openTransferModal = () => elements.transferModal.classList.add('active');
+        window.closeTransferModal = () => elements.transferModal.classList.remove('active');
+        window.toggleTransferDirection = () => {
+            const dir = document.getElementById('transfer-direction');
+            const f = document.getElementById('transfer-from-text'), t = document.getElementById('transfer-to-text');
+            if (dir.value === 'CashToBank') {
+                dir.value = 'BankToCash'; f.innerText = 'Bank'; t.innerText = 'Cash';
+                f.className = 'font-bold text-green-600'; t.className = 'font-bold text-indigo-600';
+            } else {
+                dir.value = 'CashToBank'; f.innerText = 'Cash'; t.innerText = 'Bank';
+                f.className = 'font-bold text-indigo-600'; t.className = 'font-bold text-green-600';
+            }
+        };
+
+        elements.form.onsubmit = async (e) => {
+            e.preventDefault();
+            if (!currentUser) return;
+            const editId = document.getElementById('edit-id').value;
+            const data = {
+                type: currentMode,
+                date: document.getElementById('date').value,
+                amount: parseFloat(document.getElementById('amount').value),
+                account: document.getElementById('account-type').value,
+                category: currentMode === 'Expense' ? document.getElementById('category').value : 'Income',
+                details: document.getElementById('details').value,
+                status: document.getElementById('status').value,
+                updatedAt: new Date().toISOString()
+            };
+            const path = ['artifacts', appId, 'users', currentUser.uid, 'transactions'];
+            if (editId) await updateDoc(doc(db, ...path, editId), data);
+            else { data.createdAt = new Date().toISOString(); await addDoc(collection(db, ...path), data); }
+            window.closeModal();
+        };
+
+        document.getElementById('transfer-form').onsubmit = async (e) => {
+            e.preventDefault();
+            if (!currentUser) return;
+            const amount = parseFloat(document.getElementById('transfer-amount').value);
+            const dir = document.getElementById('transfer-direction').value;
+            const transferData = {
+                type: 'Transfer', date: new Date().toISOString().split('T')[0], amount,
+                fromAccount: dir === 'CashToBank' ? 'Cash' : 'Bank',
+                toAccount: dir === 'CashToBank' ? 'Bank' : 'Cash',
+                status: 'Done', createdAt: new Date().toISOString()
+            };
+            await addDoc(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'transactions'), transferData);
+            window.closeTransferModal();
+            e.target.reset();
+        };
+
+        window.addEventListener('load', () => {
+            initIcons();
+            initAuth();
+        });
+    </script>
+</body>
+
+</html>
